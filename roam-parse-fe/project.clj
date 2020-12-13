@@ -7,7 +7,9 @@
                  [thheller/shadow-cljs "2.11.7"]
                  [instaparse "1.4.10"]
                  [reagent "0.10.0"]
-                 [re-frame "1.1.2"]]
+                 [re-frame "1.1.2"]
+                 [rhizome "0.2.9"]
+]
 
   :plugins [[lein-shadow "0.3.1"]
             
