@@ -9,6 +9,7 @@
                  [reagent "0.10.0"]
                  [re-frame "1.1.2"]
                  [rhizome "0.2.9"]
+                 [fipp "0.6.23"]
 ]
 
   :plugins [[lein-shadow "0.3.1"]
