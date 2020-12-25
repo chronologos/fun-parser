@@ -11,7 +11,6 @@
    [cljs.js :refer [empty-state eval js-eval]]
    [reagent.core :as r]))
 
-
 (defn main-form []
   (print "re-render main-form")
   (let [component-message (r/atom (ls/get-item "message"))
@@ -55,15 +54,31 @@
      A = 'a'+
      B = 'b'+"))
 
+(defn spans [t]
+  (if (sequential? t)
+    (cons {:node (first t) :span (insta/span t)} (map spans (next t)))
+    t))
 
-(defn text->hiccup
-  "Convert newlines to [:br]'s."
-  [text]
-  (->> (clojure.string/split text "\n")
-       (interpose [:br])
-       (map #(if (string? %)
-               %
-               (with-meta % {:key (gensym "br-")})))))
+(defn regen-tree [t]
+  (if (sequential? t)
+    (cons (insta/span t) (map spans (next t)))
+    t))
+
+(defn augmentedParse [parser m]
+  (let [tree (try (parser m) (catch :default e (str "invalid parse: " e ", parser = " parser)))
+        augmented (insta/transform {
+                                    ; :insectExpr (fn [a1 expr] (
+                                    ;                       ;  (print "parsing print " expr)
+                                    ;                         [a1 expr]
+                                    ;                       ;  [(js/eval expr)]
+                                    ;                        ))
+                                    } tree)
+        all-spans (spans augmented)
+        ]
+    (print "unaugmented: " tree "\n\nspans:" all-spans "\n\n")
+    augmented
+    )
+  )
 
 (defn parse-panel []
   (let [message (re-frame/subscribe [::subs/message])
@@ -72,16 +87,17 @@
     (print "re-render parse-panel")
     (fn []
       (let  [parser (try (insta/parser @syntax) (catch :default e (print "uhoh: " e ", syntax = " @syntax) as-and-bs))
-             parsed (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))
-             timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))))]
+             tree (augmentedParse parser @message)
+             timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))))
+             ]
 
-        (print (with-out-str (fipp parsed {:width 70})))
+        (print (with-out-str (fipp tree {:width 70})))
         [:div
-         [:div.row] [:p [:b "  parsed tree - " timed]]
+         [:div.row] [:p [:b "tree - " timed]]
          [:div.row
           [:div.col-sm-2]
           [:textarea.form-control.col-sm-10
-           {:value (with-out-str (fipp parsed {:width 70}))
+           {:value (with-out-str (fipp tree {:width 70}))
             :rows 10}]]
          [:div.row
           [:p (eval (empty-state)
@@ -94,4 +110,3 @@
   [:div.container-fluid
    [parse-panel]
    [main-form]])
-

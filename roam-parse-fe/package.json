@@ -1,6 +1,7 @@
 {
 	"name": "roam-parse-fe",
 	"devDependencies": {
+		"insect": "5.6.0",
 		"shadow-cljs": "2.11.7"
 	},
 	"dependencies": {
