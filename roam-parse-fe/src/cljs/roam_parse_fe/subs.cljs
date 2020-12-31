@@ -16,3 +16,8 @@
  ::syntax
  (fn [db]
    (:syntax db)))
+
+(re-frame/reg-sub
+ ::testcases
+ (fn [db]
+   (:testcases db)))

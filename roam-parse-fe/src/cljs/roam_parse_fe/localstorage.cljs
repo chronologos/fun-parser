@@ -12,10 +12,9 @@
   "Returns value of `key' from browser's localStorage."
   ([key]
    (.getItem (.-localStorage js/window) key))
-  ([key default] 
+  ([key default]
    (let [item (.getItem (.-localStorage js/window) key)]
-     (if (= item "") default item)
-                   )))
+     (if (= item "") default item))))
 
 
 (defn remove-item!

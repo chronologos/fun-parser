@@ -14,7 +14,9 @@
 (defn main-form []
   (print "re-render main-form")
   (let [component-message (r/atom (ls/get-item ls/message-key))
-        component-syntax (r/atom (ls/get-item ls/syntax-key syntax/default-syntax))]
+        component-syntax (r/atom (ls/get-item ls/syntax-key syntax/default-syntax))
+        test-result (r/atom "not run")
+        tcs @(re-frame/subscribe [::subs/testcases])]
     (fn []
       [:form
        [:div.form-group.row
@@ -36,37 +38,52 @@
                        (.preventDefault e)
                        (reset! component-syntax (-> e .-target .-value)))}]]
        [:div.form-group.row
-       [:table
-        [:tbody
-         [:tr
-          [:td.col-form-label.col-sm-1 "test messages"]
-          [:td.col-sm-5
-           [:select {:name (str "update_status_" 1)
-                     :on-change (fn [e]
-                                  (.preventDefault e)
-                                  (reset! component-message (-> e .-target .-value)))}
-            [:option {:value "[[yes [[hi]]]]"} "Nested Refs"]
-            [:option {:value "{{>insect 1+1*20}}"} "Insect Block"]
-            [:option {:value "^^**Hello**^^ **^^Seattle^^**"} "Bold Highlights Mixed"]
-            [:option {:value "**[link]([[innerref]])**"} "Bolded alias"]]]]]]
-          [:div.col-sm-4
-          [:button.btn.btn-primary.mr-2
-           {:on-click (fn [e]
-                        (.preventDefault e)
-                        (re-frame/dispatch [:new-message @component-message])
-                        (re-frame/dispatch [:new-syntax @component-syntax])
-                        (ls/set-item! "message" @component-message)
-                        (ls/set-item! "syntax" @component-syntax))}
-           "Parse"]
-          [:button.btn.btn-primary
-           {:on-click (fn [e]
-                        (.preventDefault e)
-                        (re-frame/dispatch [:new-message @component-message])
-                        (re-frame/dispatch [:new-syntax syntax/default-syntax])
-                        (reset! component-syntax syntax/default-syntax)
-                        (ls/set-item! "message" @component-message)
-                        (ls/set-item! "syntax" @component-syntax))}
-           "Reset Syntax"]]]])))
+        [:label.col-form-label.col-sm-1 "test messages"]
+        [:div.col-sm-3
+         [:table
+          [:tbody
+           [:tr
+            [:select {:name (str "update_status_" 1)
+                      :on-change (fn [e]
+                                   (.preventDefault e)
+                                   (reset! component-message (-> e .-target .-value)))}
+             (for [{testname :name
+                    testmsg :msg
+                    _ :expect} tcs]
+               ^{:key testname} [:option {:value testmsg} testname])]]]]]
+        [:div.col-sm-6
+         [:button.btn.btn-primary.mr-2
+          {:on-click (fn [e]
+                       (.preventDefault e)
+                       (re-frame/dispatch [:new-message @component-message])
+                       (re-frame/dispatch [:new-syntax @component-syntax])
+                       (ls/set-item! ls/message-key @component-message)
+                       (ls/set-item! ls/syntax-key @component-syntax))}
+          "Parse"]
+         [:button.btn.btn-primary.mr-2
+          {:on-click (fn [e]
+                       (.preventDefault e)
+                       (re-frame/dispatch [:new-message @component-message])
+                       (re-frame/dispatch [:new-syntax syntax/default-syntax])
+                       (reset! component-syntax syntax/default-syntax))}
+          "Reset Syntax"]
+         [:button.btn.btn-primary.mr-2
+          {:on-click (fn [e]
+                       (.preventDefault e)
+                       (let  [parser (try (insta/parser @component-syntax) (catch :default e (print "error: " e)))
+                              results (time (doall (for [{testname :name
+                                                          msg :msg
+                                                          expect :expect} tcs]
+                                                     (let [res  (tree/augmented-parse parser msg)]
+                                                       (if (= (str res) expect)
+                                                         (print "PASSED: " testname)
+                                                         (print "FAILED TEST: " testname " expected: " expect " got: " (str res)))
+                                                       (= (str res) expect)))))]
+                         (reset! test-result
+                                 (str (count (filter true? results))
+                                      "/" (count tcs)))))}
+          "Test All Cases"]
+         [:div [:p "test success?: " @test-result]]]]])))
 
 (defn parse-panel []
   (let [message (re-frame/subscribe [::subs/message])
