@@ -16,4 +16,8 @@
     <script src="js/compiled/app.js"></script>
 </body>
 
+<p>Why use a parser generator? We want 1) Clear specification 2) easy maintenance 3) speed (hand-written parsers are difficult to make fast). One advantage of a hand-rolled parser is clear error codes (since a user would not understand the grammar). But
+    in Roam's case we can just do an incomplete conversion to hiccup - the parts of the input that are not parsed correctly can be corrected by the user iteratively.
+</p>
+
 </html>

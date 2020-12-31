@@ -7,8 +7,8 @@
    [re-frame.core :as re-frame]
    [roam-parse-fe.subs :as subs]
    [roam-parse-fe.localstorage :as ls]
-   [cljs.tools.reader :refer [read-string]]
-   [cljs.js :refer [empty-state eval js-eval]]
+  ;;  [cljs.tools.reader :refer [read-string]]
+  ;;  [cljs.js :refer [empty-state eval js-eval]]
    [reagent.core :as r]))
 
 (defn main-form []
@@ -19,15 +19,7 @@
     (fn []
       [:form
        [:div.form-group.row
-        [:div.col-sm-1
-         [:button.btn.btn-primary
-          {:on-click (fn [e]
-                       (.preventDefault e)
-                       (re-frame/dispatch [:new-message @component-message])
-                       (re-frame/dispatch [:new-syntax @component-syntax])
-                       (ls/set-item! "message" @component-message)
-                       (ls/set-item! "syntax" @component-syntax))}
-          "Parse!"]]
+        [:div.col-sm-1]
         [:label.col-form-label.col-sm-1 "message"]
         [:textarea.form-control.col-sm-10
          {:name :message
@@ -35,7 +27,8 @@
           :value @component-message
           :on-change (fn [e]
                        (.preventDefault e)
-                       (reset! component-message (-> e .-target .-value)))}]]
+                       (reset! component-message (-> e .-target .-value)))}]
+        [:div.col-sm-1]]
        [:div.form-group.row
         [:div.col-sm-1]
         [:label.col-form-label.col-sm-1 "syntax"]
@@ -45,7 +38,33 @@
           :rows 10
           :on-change (fn [e]
                        (.preventDefault e)
-                       (reset! component-syntax (-> e .-target .-value)))}]]])))
+                       (reset! component-syntax (-> e .-target .-value)))}]
+        [:div.col-sm-1]]
+       [:table.form-group.row
+        [:tbody 
+         [:tr
+          [:td.col-sm-1]
+          [:td.col-form-label.col-sm-1 "common messages"]
+          [:td.col-sm-8
+           [:select {:name (str "update_status_" 1)
+                     :on-change (fn [e]
+                                  (.preventDefault e)
+                                  (reset! component-message (-> e .-target .-value)))}
+            [:option {:value "[[yes [[hi]]]]"} "Nested Refs"]
+            [:option {:value "{{>insect 1+1*20}}"} "Insect Block"]
+            [:option {:value "^^**Hello**^^ **^^Seattle^^**"} "Bold Highlights Mixed"]
+            [:option {:value "**[link]([[innerref]])**"} "Bolded alias"]]
+        ;;  [:input {:type "submit"} "Update"]]
+           ]
+          [:td.col-sm-2 [:button.btn.btn-primary
+                         {:on-click (fn [e]
+                                      (.preventDefault e)
+                                      (re-frame/dispatch [:new-message @component-message])
+                                      (re-frame/dispatch [:new-syntax @component-syntax])
+                                      (ls/set-item! "message" @component-message)
+                                      (ls/set-item! "syntax" @component-syntax))}
+                         "Parse!"]]
+          [:td.col-sm-1]]]]])))
 
 (def as-and-bs
   (insta/parser
@@ -64,46 +83,45 @@
     (cons (insta/span t) (map spans (next t)))
     t))
 
+
+(defn transformInsectExpr
+  ([expr]  [(js/eval expr)]))
+
 (defn augmentedParse [parser m]
   (let [tree (try (parser m) (catch :default e (str "invalid parse: " e ", parser = " parser)))
-        augmented (insta/transform {
-                                    ; :insectExpr (fn [a1 expr] (
-                                    ;                       ;  (print "parsing print " expr)
-                                    ;                         [a1 expr]
-                                    ;                       ;  [(js/eval expr)]
-                                    ;                        ))
+        augmented (insta/transform {:insectExpr transformInsectExpr
+                                    :text str
                                     } tree)
-        all-spans (spans augmented)
-        ]
-    (print "unaugmented: " tree "\n\nspans:" all-spans "\n\n")
-    augmented
-    )
-  )
+        all-spans (spans augmented)]
+    (print "unaugmented: " tree "\n\naugmented:" augmented "\n\n" "\n\nall-spans:" all-spans "\n\n")
+    augmented))
+
 
 (defn parse-panel []
   (let [message (re-frame/subscribe [::subs/message])
         syntax (re-frame/subscribe [::subs/syntax])
-        s "[:p \"--placeholder for js eval--\"]"]
-    (print "re-render parse-panel")
+        ;; s "[:p \"--placeholder for js eval--\"]"
+        ]
     (fn []
       (let  [parser (try (insta/parser @syntax) (catch :default e (print "uhoh: " e ", syntax = " @syntax) as-and-bs))
              tree (augmentedParse parser @message)
-             timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))))
-             ]
+             timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))))]
 
         (print (with-out-str (fipp tree {:width 70})))
         [:div
-         [:div.row] [:p [:b "tree - " timed]]
+         [:div.row] [:p [:b "parse tree - " timed]]
          [:div.row
           [:div.col-sm-2]
           [:textarea.form-control.col-sm-10
            {:value (with-out-str (fipp tree {:width 70}))
-            :rows 10}]]
-         [:div.row
-          [:p (eval (empty-state)
-                    (read-string s)
-                    {:eval js-eval}
-                    (fn [result] (:value result)))]]]))))
+            :rows 10
+            :readOnly true}]]
+        ;;  [:div.row
+        ;;   [:p (eval (empty-state)
+        ;;             (read-string s)
+        ;;             {:eval js-eval}
+        ;;             (fn [result] (:value result)))]]
+         ]))))
 
 (defn main-panel []
   (print "re-render main")
