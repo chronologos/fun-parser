@@ -1,5 +1,6 @@
 (ns roam-parse-fe.views
   (:require
+   [reagent.dom :as rdom]  
    [clojure.string]
    [cljs.pprint]
    [fipp.edn :refer [pprint] :rename {pprint fipp}]
@@ -90,20 +91,26 @@
         syntax (re-frame/subscribe [::subs/syntax])]
     (fn []
       (let  [parser (try (insta/parser @syntax) (catch :default e (print "error: " e ", syntax = " @syntax " - defaulting to as and bs syntax") tree/as-and-bs))
+             tree-debug (parser @message :unhide :all)
              tree (tree/augmented-parse parser @message)
              timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))))]
 
-        (print (with-out-str (fipp tree {:width 70})))
+        (print (with-out-str (fipp tree-debug {:width 70})))
+        (try (rdom/render [:div tree] (.getElementById js/document "renderarea")) (catch :default e (print "error rendering (but that's fine)")))
         [:div
-         [:div [:h2 "sample render ↓"]]
-         [:div tree]
-         [:hr]
          [:div.row
-          [:div.col-sm-1 [:p "parse tree - " timed]]
+          [:div.col-sm-1 [:p "parse tree (debug) - " timed]]
+          [:textarea.form-control.col-sm-9
+           {:value (with-out-str (fipp tree-debug {:width 70}))
+            :rows 10
+            :readOnly true}]]
+         [:div.row
+          [:div.col-sm-1 [:p "parse tree"]]
           [:textarea.form-control.col-sm-9
            {:value (with-out-str (fipp tree {:width 70}))
             :rows 10
-            :readOnly true}]]]))))
+            :readOnly true}]]
+         ]))))
 
 (defn main-panel []
   (print "re-rendering main")
