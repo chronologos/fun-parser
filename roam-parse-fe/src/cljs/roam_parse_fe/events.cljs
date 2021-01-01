@@ -10,9 +10,11 @@
           :testcases
           [{:name "Nested Refs" :msg "[[Civis [[Romanus]] Sum]]" :expect "([:ref \"Civis \" [:ref \"Romanus\"] \" Sum\"])"}
            {:name "Insect Block" :msg "{{>insect 1+5*20}}" :expect "([:insect [101]])"}
-           {:name "Bold Highlights Mixed" :msg "^^**Hello**^^ **^^Seattle^^**" :expect "([:hl [:bold \"Hello\"]] \" \" [:bold [:hl \"Seattle\"]])"}
-           {:name "Bolded alias" :msg "**[link]([[innerref]])**" :expect "([:bold [:alias \"link\" [:ref \"innerref\"]]])"}
-           {:name "Generic 1" :msg "You have [[power over your mind]] not **outside events**. Realize this, and you will find strength." :expect "(\"You have \" [:ref \"power over your mind\"] \" not \" [:bold \"outside events\"] \". Realize this, and you will find strength.\")"}
+           {:name "Bold Highlights Mixed" :msg "^^**Hello**^^ **^^Seattle^^**" :expect "([:mark [:b \"Hello\"]] \" \" [:b [:mark \"Seattle\"]])"}
+           {:name "Bold Highlights Italics Mixed" :msg "^^**Hello**^^ **__**^^Seattle^^**__**" :expect "([:mark [:b \"Hello\"]] \" \" [:b [:i [:b [:mark \"Seattle\"]]]])
+"}
+           {:name "Bolded alias" :msg "**[link]([[innerref]])**" :expect "([:b [:alias \"link\" [:ref \"innerref\"]]])"}
+           {:name "Generic 1" :msg "You have [[power over your mind]] not **outside events**. Realize this, and you will find strength." :expect "(\"You have \" [:ref \"power over your mind\"] \" not \" [:b \"outside events\"] \". Realize this, and you will find strength.\")"}
            ])))
 
 (re-frame/reg-event-db

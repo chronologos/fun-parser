@@ -95,6 +95,9 @@
 
         (print (with-out-str (fipp tree {:width 70})))
         [:div
+         [:div [:h2 "sample render ↓"]]
+         [:div tree]
+         [:hr]
          [:div.row
           [:div.col-sm-1 [:p "parse tree - " timed]]
           [:textarea.form-control.col-sm-9

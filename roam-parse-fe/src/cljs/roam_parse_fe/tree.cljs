@@ -22,6 +22,7 @@
 (defn trans-insect-expr
   ([expr]  [(js/eval expr)]))
 
+
 (defn augmented-parse [parser m]
   (let [tree (try (parser m) (catch :default e (str "invalid parse: " e ", parser = " parser)))
         augmented (insta/transform {:insectExpr trans-insect-expr
