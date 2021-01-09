@@ -14,12 +14,10 @@
 
 (defn main-form []
   (print "re-render main-form")
-  (let [component-message (r/atom (ls/get-item ls/message-key))
+  (let [component-message (r/atom (ls/get-item ls/message-key "[[hello]]"))
         component-syntax (r/atom (ls/get-item ls/syntax-key syntax/default-syntax))
         test-result (r/atom "not run")
         tcs @(re-frame/subscribe [::subs/testcases])]
-    (re-frame/dispatch [:new-message @component-message])
-    (re-frame/dispatch [:new-syntax syntax/default-syntax])
     (fn []
       [:form
        [:div.form-group.row
@@ -95,23 +93,23 @@
         syntax (re-frame/subscribe [::subs/syntax])]
     (fn []
       (let  [parser (try (insta/parser @syntax) (catch :default e (print "error: " e ", syntax = " @syntax " - defaulting to as and bs syntax") tree/as-and-bs))
-             tree-debug (parser @message :unhide :all)
-             tree-augmented (tree/augmented-parse parser @message)
-             timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))))]
+             tree-debug (try (parser @message :unhide :all) (catch :default _ "nothing yet"))
+             tree-augmented (try (tree/augmented-parse parser @message) (catch :default _ "nothing yet"))
+             timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e)))))]
 
         (print (with-out-str (fipp tree-debug {:width 70})))
-        (try (rdom/render [:div tree-augmented] (.getElementById js/document "renderarea")) (catch :default e (print "error rendering (but that's fine)")))
+        (try (rdom/render [:div tree-augmented] (.getElementById js/document "renderarea")) (catch :default _ (print "error rendering (but that's fine)")))
         [:div
          [:div.row
-          [:div.col-sm-1 [:p "parse tree (debug) - " timed]]
+          [:div.col-sm-1 [:p "parse tree (debug) - " (if (= "" timed) "?" timed)]]
           [:textarea.form-control.col-sm-9
-           {:value (with-out-str (fipp tree-debug {:width 70}))
+           {:value (with-out-str (fipp (if (= "" tree-debug) "?" tree-debug) {:width 70}))
             :rows 10
             :readOnly true}]]
          [:div.row
           [:div.col-sm-1 [:p "parse tree"]]
           [:textarea.form-control.col-sm-9
-           {:value (with-out-str (fipp tree-augmented {:width 70}))
+           {:value (with-out-str (fipp (if (= "" tree-augmented) "?" tree-augmented) {:width 70}))
             :rows 10
             :readOnly true}]]
          ]))))
