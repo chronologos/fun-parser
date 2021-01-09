@@ -22,10 +22,14 @@
 (defn trans-insect-expr
   ([expr]  [(js/eval expr)]))
 
+(defn trans-ref
+  [expr] [:a {:href expr} expr]
+)
 
 (defn augmented-parse [parser m]
   (let [tree (try (parser m) (catch :default e (str "invalid parse: " e ", parser = " parser)))
         augmented (insta/transform {:insectExpr trans-insect-expr
+                                    :ref trans-ref
                                     :text str} tree)
         all-spans (spans augmented)]
     (print "unaugmented: " tree "\n\naugmented:" augmented "\n\nall-spans:" all-spans "\n\n")

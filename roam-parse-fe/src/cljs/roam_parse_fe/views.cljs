@@ -18,6 +18,8 @@
         component-syntax (r/atom (ls/get-item ls/syntax-key syntax/default-syntax))
         test-result (r/atom "not run")
         tcs @(re-frame/subscribe [::subs/testcases])]
+    (re-frame/dispatch [:new-message @component-message])
+    (re-frame/dispatch [:new-syntax syntax/default-syntax])
     (fn []
       [:form
        [:div.form-group.row
@@ -45,6 +47,8 @@
           [:tbody
            [:tr
             [:select {:name (str "update_status_" 1)
+                      :on-blur (fn [e]
+                                   (reset! component-message (-> e .-target .-value)))
                       :on-change (fn [e]
                                    (.preventDefault e)
                                    (reset! component-message (-> e .-target .-value)))}
@@ -67,7 +71,7 @@
                        (re-frame/dispatch [:new-message @component-message])
                        (re-frame/dispatch [:new-syntax syntax/default-syntax])
                        (reset! component-syntax syntax/default-syntax))}
-          "Reset Syntax"]
+          "Load V1 Syntax"]
          [:button.btn.btn-primary.mr-2
           {:on-click (fn [e]
                        (.preventDefault e)
@@ -92,11 +96,11 @@
     (fn []
       (let  [parser (try (insta/parser @syntax) (catch :default e (print "error: " e ", syntax = " @syntax " - defaulting to as and bs syntax") tree/as-and-bs))
              tree-debug (parser @message :unhide :all)
-             tree (tree/augmented-parse parser @message)
+             tree-augmented (tree/augmented-parse parser @message)
              timed (with-out-str (time (try (parser @message) (catch :default e (str "invalid parse: " e ", parser = " parser)))))]
 
         (print (with-out-str (fipp tree-debug {:width 70})))
-        (try (rdom/render [:div tree] (.getElementById js/document "renderarea")) (catch :default e (print "error rendering (but that's fine)")))
+        (try (rdom/render [:div tree-augmented] (.getElementById js/document "renderarea")) (catch :default e (print "error rendering (but that's fine)")))
         [:div
          [:div.row
           [:div.col-sm-1 [:p "parse tree (debug) - " timed]]
@@ -107,7 +111,7 @@
          [:div.row
           [:div.col-sm-1 [:p "parse tree"]]
           [:textarea.form-control.col-sm-9
-           {:value (with-out-str (fipp tree {:width 70}))
+           {:value (with-out-str (fipp tree-augmented {:width 70}))
             :rows 10
             :readOnly true}]]
          ]))))
