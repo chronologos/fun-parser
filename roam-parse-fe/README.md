@@ -1,7 +1,9 @@
 # roam-parse-fe
 
-A [re-frame](https://github.com/day8/re-frame) application designed to ... well, that part is up to
-you.
+A [re-frame](https://github.com/day8/re-frame) application designed to demo parsing Roam Research syntax.
+
+- [Demo](https://www.iantay.dev/roamparse)
+- [Writeup](https://www.iantay.dev/roamparse-writeup/)
 
 ## Getting Started
 
