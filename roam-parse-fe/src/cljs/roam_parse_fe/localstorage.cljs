@@ -16,7 +16,6 @@
    (let [item (.getItem (.-localStorage js/window) key)]
      (if (= item "") default item))))
 
-
 (defn remove-item!
   "Remove the browser's localStorage value for the given `key`"
   [key]

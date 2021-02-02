@@ -1,6 +1,6 @@
 (ns roam-parse-fe.views
   (:require
-   [reagent.dom :as rdom]  
+   [reagent.dom :as rdom]
    [clojure.string]
    [cljs.pprint]
    [fipp.edn :refer [pprint] :rename {pprint fipp}]
@@ -46,7 +46,7 @@
            [:tr
             [:select {:name (str "update_status_" 1)
                       :on-blur (fn [e]
-                                   (reset! component-message (-> e .-target .-value)))
+                                 (reset! component-message (-> e .-target .-value)))
                       :on-change (fn [e]
                                    (.preventDefault e)
                                    (reset! component-message (-> e .-target .-value)))}
@@ -111,8 +111,7 @@
           [:textarea.form-control.col-sm-9
            {:value (with-out-str (fipp (if (= "" tree-augmented) "?" tree-augmented) {:width 70}))
             :rows 10
-            :readOnly true}]]
-         ]))))
+            :readOnly true}]]]))))
 
 (defn main-panel []
   (print "re-rendering main")

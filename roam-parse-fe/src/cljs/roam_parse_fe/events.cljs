@@ -9,7 +9,6 @@
    (assoc db/default-db
           :testcases
           [
-           
            {:name "Insect Block" :msg "{{>insect 1+5*20}}" :expect "([:insect [101]])"}
            {:name "Bold Highlights Mixed" :msg "^^**Hello**^^ **^^Seattle^^**" :expect "([:mark [:b \"Hello\"]] \" \" [:b [:mark \"Seattle\"]])"}
            {:name "Bold Highlights Italics Mixed" :msg "^^**Hello**^^ **__**^^Seattle^^**__**" :expect "([:mark [:b \"Hello\"]] \" \" [:b [:i [:b [:mark \"Seattle\"]]]])"}
@@ -26,5 +25,5 @@
 (re-frame/reg-event-db
  :new-syntax
  (fn [db [_ new-syntax]]
-   (if (not= (db :syntax) new-syntax) (print "[db event] syntax-changed to: " new-syntax))
+   (when (not= (db :syntax) new-syntax) (print "[db event] syntax-changed to: " new-syntax))
    (assoc db :syntax new-syntax)))
